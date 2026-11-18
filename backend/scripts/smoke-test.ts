@@ -3,7 +3,7 @@
  *
  * Runs 11 checks against the API. Prints PASS/FAIL for each.
  * Requires:
- *   - server running on http://localhost:4001 (npm run dev)
+ *   - server running on http://localhost:4005 (npm run dev)
  *   - REDIS_URL set in .env (for test 11)
  *
  * Run with: yarn smoke
@@ -12,7 +12,7 @@
 import 'dotenv/config';
 import { Queue, QueueEvents } from 'bullmq';
 
-const BASE = process.env.SMOKE_BASE ?? 'http://localhost:4001';
+const BASE = process.env.SMOKE_BASE ?? 'http://localhost:4005';
 const REDIS_URL = process.env.REDIS_URL;
 
 interface TestResult {
