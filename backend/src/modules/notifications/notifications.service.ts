@@ -38,6 +38,7 @@
  */
 
 import { logger } from '../../logger';
+import { env } from '../../config/env';
 import { formatPence } from '../../utils/money';
 import { record } from '../audit/audit.service';
 import { realtimeService } from '../realtime/realtime.service';
