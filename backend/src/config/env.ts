@@ -58,7 +58,7 @@ const EnvSchema = z.object({
   CONTRIBUTION_PENCE: z.coerce.number().int().positive().default(100000),
   CIRCLE_SIZE: z.coerce.number().int().min(2).max(12).default(5),
   PLATFORM_FEE_BPS: z.coerce.number().int().nonnegative().default(0),
-  TVC_ANNUAL_BPS: z.coerce.number().int().nonnegative().default(200),
+  TVC_ANNUAL_BPS: z.coerce.number().int().nonnegative().default(909),
   BRANCH_JOIN_BASE_URL: z.string().url().default('http://localhost:3000/join'),
 
   // TextBee SMS
