@@ -17,8 +17,6 @@ import { tenantsRepository } from '../tenants/tenants.repository';
 import { payoutsRepository } from './payouts.repository';
 import { calculateTvc, calculateFee } from './tvc.service';
 
-/** Circle size is fixed at 12 by design (enforced by schema check on slot_number). */
-const CIRCLE_SIZE = 12;
 
 export interface GenerateIntentsResult {
   payoutIntentId: string;
@@ -45,7 +43,7 @@ export class RotationService {
     const tenant = await tenantsRepository.findById(tenantId);
     if (!tenant) throw new NotFoundError('Tenant');
 
-    if (cycle < 1 || cycle > 12) {
+    if (cycle < 1 || cycle > env.CIRCLE_SIZE) {
       throw new AppError({
         code: 'PAYOUT_INVALID_CYCLE',
         httpStatus: 400,
@@ -81,7 +79,7 @@ export class RotationService {
     }
 
     // Compute amounts
-    const gross = BigInt(env.CONTRIBUTION_PENCE) * BigInt(CIRCLE_SIZE);
+    const gross = BigInt(env.CONTRIBUTION_PENCE) * BigInt(env.CIRCLE_SIZE);
     const tvc = calculateTvc(gross, cycle, tenant.current_tenure_tvc_bps);
     const fee = calculateFee(tvc.potAfterTvc, tenant.current_tenure_fee_bps);
 
