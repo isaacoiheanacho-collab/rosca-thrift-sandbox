@@ -223,6 +223,14 @@ export class TenantsService {
     actorId: string,
     meta: RequestMeta,
   ): Promise<TenantDto> {
+    const existing = await tenantsRepository.findByBranch(branchId, { limit: 1, offset: 0 });
+    if (existing.total > 0) {
+      throw new ConflictError(
+        'The sandbox trial allows only one savings circle per branch',
+        'SANDBOX_ONE_CIRCLE_PER_BRANCH',
+      );
+    }
+
     const tenant = await tenantsRepository.insert(branchId, null);
 
     await record({
