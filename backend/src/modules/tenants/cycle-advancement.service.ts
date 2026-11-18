@@ -120,7 +120,7 @@ export class CycleAdvancementService {
           advanced: true,
           previousCycle,
           tenantCompleted: true,
-          renewalOpened: true,
+          renewalOpened: false,
         };
       }
 
@@ -131,7 +131,7 @@ export class CycleAdvancementService {
              cycle_started_at = NOW(),
              cycle_ends_at = NOW() + INTERVAL '7 days',
              cycle_contribution_deadline_at = NOW() + INTERVAL '5 days',
-             cycle_payout_at = NOW() + INTERVAL '30 days',
+             cycle_payout_at = NOW() + INTERVAL '7 days',
              cycle_advanced_at = NOW()
          WHERE id = $1`,
         [tenant.id, newCycle],
