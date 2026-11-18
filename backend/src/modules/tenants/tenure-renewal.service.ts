@@ -3,14 +3,14 @@
  *
  * Lifecycle:
  *   NONE       -> normal operating tenant (in-tenure)
- *   VOTING     -> cycle 12 done, 7-day vote window open
+ *   VOTING     -> final cycle done, 7-day vote window open
  *   REPLACING  -> at least one NO vote; 7-day fill window open
  *   READY      -> all configured slots confirmed for next tenure; ready to activate
  *   RENEWED    -> tenure 2+ active
  *   DISSOLVED  -> could not fill the configured circle; admin closed it
  *
  * Called from:
- *   - cycleAdvancementService (opens renewal on cycle 12)
+ *   - cycleAdvancementService (opens renewal on final cycle)
  *   - provisioner (checks for REPLACING tenant before FILLING)
  *   - lazy trigger on dashboard load (checks window expiry)
  *
@@ -72,7 +72,7 @@ const FILL_WINDOW_DAYS = 7;
 
 export class TenureRenewalService {
   // ---------------------------------------------------------------
-  // Step 1: open renewal after cycle 12 payout confirmed
+  // Step 1: open renewal after final cycle payout confirmed
   // ---------------------------------------------------------------
 
   async openRenewalForTenant(tenantId: string): Promise<void> {
@@ -479,7 +479,7 @@ export class TenureRenewalService {
 
     const tenant = await tenantsRepository.findById(tenantId);
     // NOTE: no eager intent generation here. Payout intents for cycle 1
-    // of the new tenure are generated when 12 contributions are confirmed.
+    // of the new tenure are generated when all configured circle contributions are confirmed.
 
     // Notify all tenant members (best-effort)
     if (renewed && tenant) {
@@ -544,7 +544,7 @@ export class TenureRenewalService {
     target: { tenant: TenantRow; count: number },
     _allFilling: Array<{ tenant: TenantRow; count: number }>,
   ): Promise<void> {
-    const slotsNeeded = 12 - renewingCount;
+    const slotsNeeded = env.CIRCLE_SIZE - renewingCount;
     if (slotsNeeded <= 0) {
       await this.activateNextTenure(renewingTenant.id);
       return;
@@ -631,7 +631,7 @@ export class TenureRenewalService {
     renewingMembers: TenantMembershipRow[],
     target: { tenant: TenantRow; count: number },
   ): Promise<void> {
-    const slotsAvailableInTarget = 12 - target.count;
+    const slotsAvailableInTarget = env.CIRCLE_SIZE - target.count;
     if (slotsAvailableInTarget <= 0) {
       logger.warn(
         { targetTenantId: target.tenant.id },
@@ -652,7 +652,7 @@ export class TenureRenewalService {
 
     const used = await tenantsRepository.usedSlots(target.tenant.id);
     const freeSlots: number[] = [];
-    for (let s = 1; s <= 12; s++) {
+    for (let s = 1; s <= env.CIRCLE_SIZE; s++) {
       if (!used.includes(s)) freeSlots.push(s);
     }
 
