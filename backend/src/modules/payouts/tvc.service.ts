@@ -1,12 +1,12 @@
 /**
  * TVC (Time-Value Contribution) service.
  *
- * Rewards late collectors and penalizes early collectors to reflect the time
- * value of money. The circle midpoint has zero adjustment.
+ * Rewards earlier collection positions and applies the corresponding negative
+ * adjustment to later positions. The circle midpoint has zero adjustment.
  *
  * Formula:
  *   cycle_rate = annual_rate_bps / 10000 / 52 (weekly cycle)
- *   adjustment   = gross_pot * weekly_rate * (position - circle_midpoint)
+ *   adjustment   = gross_pot * weekly_rate * (circle_midpoint - position)
  *
  * Where position is the slot number and collection cycle; each cycle is one week.
  */
@@ -40,7 +40,7 @@ export function calculateTvc(
   // Double the centred slot offset to preserve integer arithmetic:
   //   adjustmentPence = grossPotPence * tvcAnnualBps * (2*position - (CIRCLE_SIZE + 1)) / (10000 * 104)
 
-  const doubleOffset = 2 * position - (env.CIRCLE_SIZE + 1); // centred on the configured circle midpoint
+  const doubleOffset = (env.CIRCLE_SIZE + 1) - 2 * position; // positive before midpoint, negative after
   const numerator = grossPotPence * BigInt(tvcAnnualBps) * BigInt(doubleOffset);
   const denominator = BigInt(10000 * 104); // annual rate converted to a weekly rate
 
