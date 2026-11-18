@@ -2,7 +2,7 @@
  * TVC (Time-Value Contribution) service.
  *
  * Rewards late collectors and penalizes early collectors to reflect the time
- * value of money. The midpoint (6.5) has zero adjustment.
+ * value of money. The circle midpoint has zero adjustment.
  *
  * Formula:
  *   monthly_rate = annual_rate_bps / 10000 / 12
@@ -30,8 +30,8 @@ export function calculateTvc(
   position: number,
   tvcAnnualBps: number,
 ): TvcCalculation {
-  if (position < 1 || position > 12) {
-    throw new Error(`Invalid position: ${position}. Must be 1-12.`);
+  if (position < 1 || position > env.CIRCLE_SIZE) {
+    throw new Error(`Invalid position: ${position}. Must be 1-${env.CIRCLE_SIZE}.`);
   }
 
   // Monthly rate = annual BPS / 10000 / 12
@@ -41,9 +41,9 @@ export function calculateTvc(
   // (position - 6.5) is x.5, so we double it to keep integers:
   //   adjustmentPence = grossPotPence * tvcAnnualBps * (2*position - 13) / (10000 * 24)
 
-  const doubleOffset = 2 * position - 13; // ranges from -11 to +11
+  const doubleOffset = 2 * position - (env.CIRCLE_SIZE + 1); // centred on the configured circle midpoint
   const numerator = grossPotPence * BigInt(tvcAnnualBps) * BigInt(doubleOffset);
-  const denominator = BigInt(10000 * 24); // 240000
+  const denominator = BigInt(10000 * 24); // annual rate converted to a monthly rate
 
   // Round half-up: add (denominator / 2) for positive, subtract for negative
   const half = denominator / 2n;
