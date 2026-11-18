@@ -1,43 +1,52 @@
 -- =============================================================================
 -- 026_sandbox_five_member_trial.sql
--- Sandbox-only limits: five saver slots and five cycles.
--- This migration is intentionally confined to the sandbox database/repository.
+-- Sandbox-only five-member / five-cycle limits.
+--
+-- Existing 12-slot constraints are retained for historical rows. These
+-- additional NOT VALID constraints are enforced for new and updated rows,
+-- without requiring old sandbox test data to be rewritten or deleted.
 -- =============================================================================
 
-DO $$
-DECLARE
-  item RECORD;
-  definition TEXT;
-  replacement TEXT;
-BEGIN
-  FOR item IN
-    SELECT c.conname, t.relname AS table_name, pg_get_constraintdef(c.oid) AS definition
-    FROM pg_constraint c
-    JOIN pg_class t ON t.oid = c.conrelid
-    JOIN pg_namespace n ON n.oid = t.relnamespace
-    WHERE c.contype = 'c'
-      AND n.nspname = 'public'
-      AND t.relname IN (
-        'tenants',
-        'tenant_memberships',
-        'contribution_intents',
-        'contributions',
-        'payout_intents',
-        'platform_fee_intents',
-        'tenure_renewals'
-      )
-      AND pg_get_constraintdef(c.oid) ~ '12'
-  LOOP
-    definition := item.definition;
-    replacement := regexp_replace(definition, '\m12\M', '5', 'g');
-    IF replacement <> definition THEN
-      EXECUTE format('ALTER TABLE public.%I DROP CONSTRAINT %I', item.table_name, item.conname);
-      EXECUTE format('ALTER TABLE public.%I ADD CONSTRAINT %I CHECK (%s)',
-        item.table_name, item.conname, substring(replacement FROM 7));
-    END IF;
-  END LOOP;
-END $$;
+BEGIN;
 
--- Prevent a second trial circle from being created for the same branch.
-CREATE UNIQUE INDEX IF NOT EXISTS uq_sandbox_one_tenant_per_branch
+ALTER TABLE tenants
+  ADD CONSTRAINT tenants_sandbox_five_cycle_check
+  CHECK (current_cycle BETWEEN 0 AND 5) NOT VALID;
+
+ALTER TABLE tenant_memberships
+  ADD CONSTRAINT tenant_memberships_sandbox_five_slot_check
+  CHECK (slot_number BETWEEN 1 AND 5) NOT VALID;
+
+ALTER TABLE contribution_intents
+  ADD CONSTRAINT contribution_intents_sandbox_five_cycle_check
+  CHECK (cycle BETWEEN 1 AND 5) NOT VALID,
+  ADD CONSTRAINT contribution_intents_sandbox_five_slot_check
+  CHECK (slot_number BETWEEN 1 AND 5) NOT VALID;
+
+ALTER TABLE contributions
+  ADD CONSTRAINT contributions_sandbox_five_cycle_check
+  CHECK (cycle BETWEEN 1 AND 5) NOT VALID,
+  ADD CONSTRAINT contributions_sandbox_five_slot_check
+  CHECK (slot_number BETWEEN 1 AND 5) NOT VALID;
+
+ALTER TABLE platform_fee_intents
+  ADD CONSTRAINT platform_fee_intents_sandbox_five_cycle_check
+  CHECK (cycle BETWEEN 1 AND 5) NOT VALID;
+
+ALTER TABLE payout_intents
+  ADD CONSTRAINT payout_intents_sandbox_five_cycle_check
+  CHECK (cycle BETWEEN 1 AND 5) NOT VALID,
+  ADD CONSTRAINT payout_intents_sandbox_five_recipient_slot_check
+  CHECK (recipient_slot BETWEEN 1 AND 5) NOT VALID;
+
+ALTER TABLE tenure_renewals
+  ADD CONSTRAINT tenure_renewals_sandbox_five_slot_check
+  CHECK (slot_number BETWEEN 1 AND 5) NOT VALID;
+
+-- The live sandbox inspection confirmed no branch currently has multiple
+-- tenants, so this index can safely enforce one circle per branch going
+-- forward. Production uses a separate database and repository.
+CREATE UNIQUE INDEX uq_sandbox_one_tenant_per_branch
   ON tenants (branch_id);
+
+COMMIT;
