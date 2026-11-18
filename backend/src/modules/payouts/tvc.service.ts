@@ -5,8 +5,8 @@
  * value of money. The circle midpoint has zero adjustment.
  *
  * Formula:
- *   monthly_rate = annual_rate_bps / 10000 / 12
- *   adjustment   = gross_pot * monthly_rate * (position - 6.5)
+ *   cycle_rate = annual_rate_bps / 10000 / 12
+ *   adjustment   = gross_pot * monthly_rate * (position - circle_midpoint)
  *
  * Where position = the slot number (1-12), which is also the collection cycle.
  */
@@ -25,7 +25,7 @@ export interface TvcCalculation {
  *
  * @param grossPotPence    The gross pool (e.g. £12,000 = 1_200_000n pence)
  * @param position         The slot number (1-12) — also the cycle number
- * @param tvcAnnualBps     The annual TVC rate in basis points (e.g. 200 = 2% p.a.)
+ * @param tvcAnnualBps     The annual TVC rate in basis points (e.g. 909 = 9.09% p.a.)
  */
 export function calculateTvc(
   grossPotPence: bigint,
@@ -38,10 +38,10 @@ export function calculateTvc(
 
   // Monthly rate = annual BPS / 10000 / 12
   // We work in BPS * 100 to preserve integer math:
-  //   adjustmentPence = grossPotPence * tvcAnnualBps * (position - 6.5) / (10000 * 12)
+  //   adjustmentPence = grossPotPence * tvcAnnualBps * (position - circle midpoint) / (10000 * 12)
   //
   // (position - 6.5) is x.5, so we double it to keep integers:
-  //   adjustmentPence = grossPotPence * tvcAnnualBps * (2*position - 13) / (10000 * 24)
+  //   adjustmentPence = grossPotPence * tvcAnnualBps * (2*position - (CIRCLE_SIZE + 1)) / (10000 * 24)
 
   const doubleOffset = 2 * position - (env.CIRCLE_SIZE + 1); // centred on the configured circle midpoint
   const numerator = grossPotPence * BigInt(tvcAnnualBps) * BigInt(doubleOffset);
