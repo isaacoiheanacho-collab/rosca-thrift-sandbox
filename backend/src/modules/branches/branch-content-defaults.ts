@@ -9,7 +9,7 @@
 
 export const DEFAULT_BRANCH_ABOUT = `We are a savings circle running on ROSCA Thrift & Savings.
 
-Our branch runs 12-member circles. Each member contributes the same amount every month. Each month, one member receives the entire pool. Over 12 months, every member contributes the same total, and every member receives the pool exactly once.
+Our branch runs five-member savings circles. Each member contributes the same amount every week. Each week, one member receives the entire pool. Over five weeks, every member contributes the same total, and every member receives the pool exactly once.
 
 Slots are assigned randomly when the circle forms. Contributions and payouts are verified by our branch admin. Every transfer is recorded in a shared ledger that all members can see.
 
@@ -21,19 +21,19 @@ export const DEFAULT_BRANCH_TERMS = `These are the standard membership terms for
 You must complete identity verification (KYC) before joining a circle. We collect your full legal name, home address, phone number, and bank details.
 
 2. Contributions
-You agree to contribute the amount set by this branch on or before the deadline each month. Contributions are made by bank transfer to our branch's pool account.
+You agree to contribute the amount set by this branch on or before the deadline each week. Contributions are made by bank transfer to our branch's pool account.
 
 3. Payouts
-Your position in the circle (your "slot") determines which month you receive the pool. Slot numbers are assigned randomly. Early receivers get a slight discount and late receivers get a slight bonus, calculated as Time-Value Contribution (TVC) at 2% per year.
+Your position in the circle (your "slot") determines which week you receive the pool. Slot numbers are assigned randomly. Early receivers get a time-value adjustment and later receivers get a corresponding bonus, calculated using Time-Value Contribution (TVC) at 9.09% per year.
 
 4. Default
 If you miss a contribution, we will contact you. If you continue to miss contributions, we may need to replace you in the circle so that other members are not affected.
 
 5. Renewal
-After 12 months, every member votes on whether to continue for another year. All members must agree to renew. If you decline, you will be removed and replaced.
+This sandbox trial covers one five-week tenure and does not automatically renew. Any further tenure requires a separately agreed arrangement.
 
 6. Leaving
-You cannot leave the circle mid-tenure. At the end of a tenure you may decline renewal. This protects every other member's contribution and payout.
+You cannot leave the circle mid-tenure. The trial ends after the fifth weekly cycle. This protects every other member's contribution and payout.
 
 7. Disputes
 If you have a dispute, contact your branch admin first. If that does not resolve it, contact the platform operator using the details in their Privacy Policy.`;
