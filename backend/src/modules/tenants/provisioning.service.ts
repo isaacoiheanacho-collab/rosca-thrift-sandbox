@@ -39,7 +39,7 @@ export interface ProvisionResult {
 }
 
 function pickRandomFreeSlot(used: number[]): number | null {
-  const free = Array.from({ length: 12 }, (_, i) => i + 1).filter((n) => !used.includes(n));
+  const free = Array.from({ length: env.CIRCLE_SIZE }, (_, i) => i + 1).filter((n) => !used.includes(n));
   if (free.length === 0) return null;
   return free[Math.floor(Math.random() * free.length)]!;
 }
@@ -158,7 +158,7 @@ export class ProvisioningService {
 
       let activated = false;
 
-      if (memberCount >= 12 && tenant!.status === 'FILLING') {
+      if (memberCount >= env.CIRCLE_SIZE && tenant!.status === 'FILLING') {
         // Set activation + cycle + snapshot tenure rates
         await tx.query(
           `UPDATE tenants
@@ -167,8 +167,8 @@ export class ProvisioningService {
                current_tenure = 1,
                current_cycle = 1,
                cycle_started_at = NOW(),
-               cycle_ends_at = NOW() + INTERVAL '30 days',
-               cycle_contribution_deadline_at = NOW() + INTERVAL '21 days',
+               cycle_ends_at = NOW() + INTERVAL '7 days',
+               cycle_contribution_deadline_at = NOW() + INTERVAL '5 days',
                cycle_payout_at = NOW() + INTERVAL '30 days',
                current_tenure_fee_bps = $2,
                current_tenure_tvc_bps = $3,
