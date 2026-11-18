@@ -103,6 +103,13 @@ export class ProvisioningService {
     let createdNewTenant = false;
 
     if (!tenant) {
+      const existingTenantRes = await pool.query<{ count: string }>(
+        `SELECT COUNT(*)::text AS count FROM tenants WHERE branch_id = $1`,
+        [branchId]
+      );
+      if (Number(existingTenantRes.rows[0]?.count ?? '0') > 0) {
+        throw new Error('Sandbox trial allows only one savings circle per branch');
+      }
       // Count existing tenants to generate a sequential name (e.g., Tenant 01)
       const countRes = await pool.query<{ count: string }>(
         `SELECT COUNT(*)::text AS count FROM tenants WHERE branch_id = $1`,
@@ -169,7 +176,7 @@ export class ProvisioningService {
                cycle_started_at = NOW(),
                cycle_ends_at = NOW() + INTERVAL '7 days',
                cycle_contribution_deadline_at = NOW() + INTERVAL '5 days',
-               cycle_payout_at = NOW() + INTERVAL '30 days',
+               cycle_payout_at = NOW() + INTERVAL '7 days',
                current_tenure_fee_bps = $2,
                current_tenure_tvc_bps = $3,
                tenure_started_at = NOW()
