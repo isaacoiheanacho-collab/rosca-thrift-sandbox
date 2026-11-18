@@ -285,7 +285,7 @@ export class TenantsService {
 
   async pickRandomFreeSlot(tenantId: string): Promise<number> {
     const used = await tenantsRepository.usedSlots(tenantId);
-    if (used.length >= 12) {
+    if (used.length >= env.CIRCLE_SIZE) {
       throw new AppError({
         code: 'TENANT_FULL',
         httpStatus: 409,
