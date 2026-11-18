@@ -104,8 +104,8 @@ export class PayoutsRepository {
     const runner = tx ?? pool;
     const result = await runner.query<PlatformFeeIntentRow>(
       `INSERT INTO platform_fee_intents
-         (tenant_id, branch_id, tenure, cycle, reference, amount, fee_bps, state)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+         (tenant_id, branch_id, tenure, cycle, reference, amount, fee_bps, state, confirmed_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CASE WHEN $8 = 'CONFIRMED' THEN NOW() ELSE NULL END)
        RETURNING *`,
       [
         data.tenantId,
@@ -296,8 +296,8 @@ export class PayoutsRepository {
           recipient_user_id, recipient_membership_id, recipient_slot,
           reference, gross_amount, tvc_adjustment, pot_after_tvc,
           platform_fee, net_amount, tvc_bps, fee_bps, fee_intent_id,
-          retry_of_payout_id, retry_count, state)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+          retry_of_payout_id, retry_count, state, fee_confirmed_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, CASE WHEN $19 = 'FEE_PAID' THEN NOW() ELSE NULL END)
        RETURNING *`,
       [
         data.tenantId,
