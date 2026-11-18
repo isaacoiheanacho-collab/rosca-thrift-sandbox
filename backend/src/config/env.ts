@@ -27,7 +27,7 @@ const RedisUrl = z
 
 const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  PORT: z.coerce.number().int().positive().default(4001),
+  PORT: z.coerce.number().int().positive().default(4005),
 
   DATABASE_URL: PostgresUrl,
   DIRECT_URL: PostgresUrl.optional(),
@@ -56,7 +56,7 @@ const EnvSchema = z.object({
   // Tenant and branch configuration
   MAX_TENANTS: z.coerce.number().int().positive().default(50),
   CONTRIBUTION_PENCE: z.coerce.number().int().positive().default(100000),
-  CIRCLE_SIZE: z.coerce.number().int().min(2).max(12).default(5),
+  CIRCLE_SIZE: z.coerce.number().int().refine((value) => value === 5, 'must be 5 for the five-member sandbox trial').default(5),
   PLATFORM_FEE_BPS: z.coerce.number().int().nonnegative().default(0),
   TVC_ANNUAL_BPS: z.coerce.number().int().nonnegative().default(909),
   BRANCH_JOIN_BASE_URL: z.string().url().default('http://localhost:3000/join'),
