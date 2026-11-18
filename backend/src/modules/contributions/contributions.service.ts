@@ -272,7 +272,7 @@ export class ContributionsService {
     const tenure = tenant.current_tenure;
     const cycle = tenant.current_cycle;
 
-    if (cycle < 1 || cycle > 12) {
+    if (cycle < 1 || cycle > env.CIRCLE_SIZE) {
       throw new AppError({
         code: 'CONTRIB_INVALID_CYCLE',
         httpStatus: 500,
@@ -618,7 +618,7 @@ export class ContributionsService {
       );
       const confirmedCount = Number(cycleCountRes.rows[0]?.count ?? '0');
 
-      if (confirmedCount >= 12) {
+      if (confirmedCount >= env.CIRCLE_SIZE) {
         await rotationService.ensureIntentsForCycle(
           intent.tenant_id,
           intent.tenure,
