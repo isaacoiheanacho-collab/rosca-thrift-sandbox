@@ -27,6 +27,7 @@ import { requireAuth, requireSuperAdmin, requireBranchAdmin } from '../../middle
 import { validate } from '../../middleware/validate';
 import { AppError, NotFoundError } from '../../errors';
 import { pool } from '../../db';
+import { env } from '../../config/env';
 import { tenantsService, type RequestMeta } from './tenants.service';
 import { provisioningService } from './provisioning.service';
 import { usersRepository } from '../users/users.repository';
@@ -50,7 +51,7 @@ tenantsRouter.get('/me', requireAuth, async (req: Request, res: Response, next: 
     }
 
     // ─────────────────────────────────────────────────────────────
-    // Check if the current cycle has all 12 contributions confirmed.
+    // Check if the current cycle has all configured circle contributions confirmed.
     // Only if so is the payout intent meaningful to display.
     // ─────────────────────────────────────────────────────────────
     const cycleCountRes = await pool.query<{ count: string }>(
@@ -59,7 +60,7 @@ tenantsRouter.get('/me', requireAuth, async (req: Request, res: Response, next: 
       [dto.tenant.id, dto.tenant.currentTenure, dto.tenant.currentCycle],
     );
     const confirmedCount = Number(cycleCountRes.rows[0]?.count ?? '0');
-    const cycleComplete = confirmedCount >= 12;
+    const cycleComplete = confirmedCount >= env.CIRCLE_SIZE;
 
     let formattedPayout = null;
 
