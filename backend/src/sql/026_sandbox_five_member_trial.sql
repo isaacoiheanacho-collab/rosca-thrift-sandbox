@@ -7,8 +7,6 @@
 -- without requiring old sandbox test data to be rewritten or deleted.
 -- =============================================================================
 
-BEGIN;
-
 ALTER TABLE tenants
   ADD CONSTRAINT tenants_sandbox_five_cycle_check
   CHECK (current_cycle BETWEEN 0 AND 5) NOT VALID;
@@ -49,4 +47,3 @@ ALTER TABLE tenure_renewals
 CREATE UNIQUE INDEX uq_sandbox_one_tenant_per_branch
   ON tenants (branch_id);
 
-COMMIT;
