@@ -199,12 +199,13 @@ export class TenantsService {
       throw new ConflictError(`Tenant is already ${status}`, 'TENANT_STATUS_UNCHANGED');
     }
 
-    // Sandbox circles must be activated by provisioning after the fifth
-    // member is assigned. Manual activation skips cycle and deadline setup.
-    if (status === 'ACTIVE') {
+    // Circle lifecycle is system-managed in this trial. Manual status
+    // changes could bypass activation, payout, or five-cycle completion.
+    // Archiving remains available as an explicit administrative stop action.
+    if (status !== 'ARCHIVED') {
       throw new ConflictError(
-        `A sandbox circle activates automatically when all ${env.CIRCLE_SIZE} members are assigned`,
-        'TENANT_AUTO_ACTIVATION_ONLY',
+        'Sandbox circle status is managed automatically; only archiving is permitted',
+        'SANDBOX_STATUS_SYSTEM_MANAGED',
       );
     }
 
