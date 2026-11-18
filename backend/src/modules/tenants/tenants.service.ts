@@ -199,6 +199,15 @@ export class TenantsService {
       throw new ConflictError(`Tenant is already ${status}`, 'TENANT_STATUS_UNCHANGED');
     }
 
+    // Sandbox circles must be activated by provisioning after the fifth
+    // member is assigned. Manual activation skips cycle and deadline setup.
+    if (status === 'ACTIVE') {
+      throw new ConflictError(
+        `A sandbox circle activates automatically when all ${env.CIRCLE_SIZE} members are assigned`,
+        'TENANT_AUTO_ACTIVATION_ONLY',
+      );
+    }
+
     const updated = await tenantsRepository.updateStatus(tenantId, status, {
       activate: status === 'ACTIVE',
       complete: status === 'COMPLETED',
