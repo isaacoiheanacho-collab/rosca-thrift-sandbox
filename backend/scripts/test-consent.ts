@@ -14,7 +14,7 @@
 
 import 'dotenv/config';
 
-const BASE = process.env.SMOKE_BASE ?? 'http://localhost:4001';
+const BASE = process.env.SMOKE_BASE ?? 'http://localhost:4005';
 const SUPER_PHONE = process.env.SUPER_ADMIN_PHONE;
 const SUPER_PASSWORD = process.env.TEST_SUPER_PASSWORD ?? 'SuperAdmin1#';
 const DEV_OTP = process.env.DEV_OTP_OVERRIDE;
