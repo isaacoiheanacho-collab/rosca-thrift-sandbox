@@ -15,7 +15,7 @@
  *   - If any check fails: silently do nothing (idempotent)
  *
  * Payout + fee intents for the NEW cycle are NOT generated here — they
- * are generated when the 12th contribution for that cycle is confirmed
+ * are generated when all circle contributions for that cycle is confirmed
  * (see contributionsService.confirmContribution). This ensures the pool
  * reflects the actual money collected, not a projection.
  *
@@ -25,6 +25,7 @@
  */
 
 import { logger } from '../../logger';
+import { env } from '../../config/env';
 import { withTransaction } from '../../db';
 import { tenantsRepository, type TenantRow } from './tenants.repository';
 import { tenureRenewalService } from './tenure-renewal.service';
@@ -41,7 +42,7 @@ export interface AdvancementResult {
   newFeeIntentId?: string;
 }
 
-const CYCLES_PER_TENURE = 12;
+const CYCLES_PER_TENURE = env.CIRCLE_SIZE;
 
 interface TxResult {
   advanced: boolean;
@@ -92,7 +93,7 @@ export class CycleAdvancementService {
 
       // Idempotency is enforced by the payout state check above.
       // Once we advance, the NEW cycle's payout will not exist until
-      // 12 contributions are confirmed (and will be PENDING when it does),
+      // all circle contributions are confirmed (and will be PENDING when it does),
       // so the next call will find it absent/not-CONFIRMED and will not
       // double-advance.
 
@@ -128,8 +129,8 @@ export class CycleAdvancementService {
         `UPDATE tenants
          SET current_cycle = $2,
              cycle_started_at = NOW(),
-             cycle_ends_at = NOW() + INTERVAL '30 days',
-             cycle_contribution_deadline_at = NOW() + INTERVAL '21 days',
+             cycle_ends_at = NOW() + INTERVAL '7 days',
+             cycle_contribution_deadline_at = NOW() + INTERVAL '5 days',
              cycle_payout_at = NOW() + INTERVAL '30 days',
              cycle_advanced_at = NOW()
          WHERE id = $1`,
@@ -157,7 +158,7 @@ export class CycleAdvancementService {
 
     if (result.advanced && result.newCycle && !result.tenantCompleted) {
       // NOTE: payout + fee intents for the new cycle are NOT generated here.
-      // They are generated when the 12th contribution is confirmed
+      // They are generated when all circle contributions are confirmed
       // (see contributions.service.confirmContribution). This ensures
       // the pool shows the actual money collected, not a projection.
 
