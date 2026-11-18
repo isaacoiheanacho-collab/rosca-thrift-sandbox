@@ -11,6 +11,8 @@
  * Where position = the slot number (1-12), which is also the collection cycle.
  */
 
+import { env } from '../../config/env';
+
 export interface TvcCalculation {
   grossPot: bigint;
   adjustment: bigint;  // signed, pence
