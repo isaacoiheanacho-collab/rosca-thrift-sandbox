@@ -97,14 +97,15 @@ export class PayoutsRepository {
       reference: string;
       amount: bigint;
       feeBps: number;
+      initialState?: FeeIntentState;
     },
     tx?: PoolClient,
   ): Promise<PlatformFeeIntentRow> {
     const runner = tx ?? pool;
     const result = await runner.query<PlatformFeeIntentRow>(
       `INSERT INTO platform_fee_intents
-         (tenant_id, branch_id, tenure, cycle, reference, amount, fee_bps)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+         (tenant_id, branch_id, tenure, cycle, reference, amount, fee_bps, state)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
       [
         data.tenantId,
@@ -114,6 +115,7 @@ export class PayoutsRepository {
         data.reference,
         data.amount,
         data.feeBps,
+        data.initialState ?? 'PENDING',
       ],
     );
     return result.rows[0]!;
@@ -281,6 +283,7 @@ export class PayoutsRepository {
       tvcBps: number;
       feeBps: number;
       feeIntentId: string;
+      initialState?: PayoutIntentState;
       retryOfPayoutId?: string | null;
       retryCount?: number;
     },
@@ -293,8 +296,8 @@ export class PayoutsRepository {
           recipient_user_id, recipient_membership_id, recipient_slot,
           reference, gross_amount, tvc_adjustment, pot_after_tvc,
           platform_fee, net_amount, tvc_bps, fee_bps, fee_intent_id,
-          retry_of_payout_id, retry_count)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+          retry_of_payout_id, retry_count, state)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
        RETURNING *`,
       [
         data.tenantId,
@@ -315,6 +318,7 @@ export class PayoutsRepository {
         data.feeIntentId,
         data.retryOfPayoutId ?? null,
         data.retryCount ?? 0,
+        data.initialState ?? 'PENDING',
       ],
     );
     return result.rows[0]!;
