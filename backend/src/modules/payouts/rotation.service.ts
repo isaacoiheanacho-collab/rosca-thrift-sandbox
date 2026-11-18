@@ -96,6 +96,7 @@ export class RotationService {
           reference: feeReference,
           amount: fee.fee,
           feeBps: tenant.current_tenure_fee_bps,
+          initialState: fee.fee === 0n ? 'CONFIRMED' : 'PENDING',
         },
         tx,
       );
@@ -118,6 +119,7 @@ export class RotationService {
           tvcBps: tenant.current_tenure_tvc_bps,
           feeBps: tenant.current_tenure_fee_bps,
           feeIntentId: feeIntent.id,
+          initialState: fee.fee === 0n ? 'FEE_PAID' : 'PENDING',
         },
         tx,
       );
