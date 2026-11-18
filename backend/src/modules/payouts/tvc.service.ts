@@ -5,10 +5,10 @@
  * value of money. The circle midpoint has zero adjustment.
  *
  * Formula:
- *   cycle_rate = annual_rate_bps / 10000 / 12
- *   adjustment   = gross_pot * monthly_rate * (position - circle_midpoint)
+ *   cycle_rate = annual_rate_bps / 10000 / 52 (weekly cycle)
+ *   adjustment   = gross_pot * weekly_rate * (position - circle_midpoint)
  *
- * Where position = the slot number (1-12), which is also the collection cycle.
+ * Where position is the slot number and collection cycle; each cycle is one week.
  */
 
 import { env } from '../../config/env';
@@ -24,7 +24,7 @@ export interface TvcCalculation {
  * Calculate TVC for one payout.
  *
  * @param grossPotPence    The gross pool (e.g. £12,000 = 1_200_000n pence)
- * @param position         The slot number (1-12) — also the cycle number
+ * @param position         The slot number (1-CIRCLE_SIZE) — also the weekly cycle number
  * @param tvcAnnualBps     The annual TVC rate in basis points (e.g. 909 = 9.09% p.a.)
  */
 export function calculateTvc(
@@ -36,16 +36,13 @@ export function calculateTvc(
     throw new Error(`Invalid position: ${position}. Must be 1-${env.CIRCLE_SIZE}.`);
   }
 
-  // Monthly rate = annual BPS / 10000 / 12
-  // We work in BPS * 100 to preserve integer math:
-  //   adjustmentPence = grossPotPence * tvcAnnualBps * (position - circle midpoint) / (10000 * 12)
-  //
-  // (position - 6.5) is x.5, so we double it to keep integers:
-  //   adjustmentPence = grossPotPence * tvcAnnualBps * (2*position - (CIRCLE_SIZE + 1)) / (10000 * 24)
+  // Each collection cycle is one week, so convert the annual rate to a weekly rate.
+  // Double the centred slot offset to preserve integer arithmetic:
+  //   adjustmentPence = grossPotPence * tvcAnnualBps * (2*position - (CIRCLE_SIZE + 1)) / (10000 * 104)
 
   const doubleOffset = 2 * position - (env.CIRCLE_SIZE + 1); // centred on the configured circle midpoint
   const numerator = grossPotPence * BigInt(tvcAnnualBps) * BigInt(doubleOffset);
-  const denominator = BigInt(10000 * 24); // annual rate converted to a monthly rate
+  const denominator = BigInt(10000 * 104); // annual rate converted to a weekly rate
 
   // Round half-up: add (denominator / 2) for positive, subtract for negative
   const half = denominator / 2n;
