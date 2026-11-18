@@ -5,9 +5,9 @@
  *   NONE       -> normal operating tenant (in-tenure)
  *   VOTING     -> cycle 12 done, 7-day vote window open
  *   REPLACING  -> at least one NO vote; 7-day fill window open
- *   READY      -> 12 slots confirmed for next tenure; ready to activate
+ *   READY      -> all configured slots confirmed for next tenure; ready to activate
  *   RENEWED    -> tenure 2+ active
- *   DISSOLVED  -> could not reach 12; admin closed it
+ *   DISSOLVED  -> could not fill the configured circle; admin closed it
  *
  * Called from:
  *   - cycleAdvancementService (opens renewal on cycle 12)
@@ -85,10 +85,10 @@ export class TenureRenewalService {
     }
 
     const memberships = await tenantsRepository.findMembershipsByTenant(tenantId);
-    if (memberships.length !== 12) {
+    if (memberships.length !== env.CIRCLE_SIZE) {
       logger.warn(
         { tenantId, count: memberships.length },
-        'Cannot open renewal: tenant does not have 12 memberships',
+        'Cannot open renewal: tenant does not have the configured circle membership count',
       );
       return;
     }
@@ -262,7 +262,7 @@ export class TenureRenewalService {
       tenant.current_tenure,
     );
 
-    if (counts.yes === 12) {
+    if (counts.yes === env.CIRCLE_SIZE) {
       await this.activateNextTenure(tenantId);
       return;
     }
@@ -706,7 +706,7 @@ export class TenureRenewalService {
         renewingTenant.id,
         'All members transferred during rebalance',
       );
-    } else if (remaining.length === 12) {
+    } else if (remaining.length === env.CIRCLE_SIZE) {
       await this.activateNextTenure(renewingTenant.id);
     } else {
       logger.warn(
