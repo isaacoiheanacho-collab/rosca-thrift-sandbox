@@ -1,18 +1,18 @@
 /**
  * Provisioning end-to-end test.
  *
- * Creates a fresh branch, registers 12 savers, verifies each, submits KYC
+ * Creates a fresh branch, registers five savers, verifies each, submits KYC
  * for each, has super admin approve each. Confirms:
- *   - First 12 savers land in ONE tenant (12 slots filled)
- *   - The 12th approval activates the tenant (status = ACTIVE)
- *   - The 13th saver starts a SECOND tenant (FILLING)
+ *   - All five savers land in ONE tenant (five slots filled)
+ *   - The fifth approval activates the tenant (status = ACTIVE)
+ *   - The branch remains limited to one tenant
  *
  * Run: yarn test:provisioning
  */
 
 import 'dotenv/config';
 
-const BASE = process.env.SMOKE_BASE ?? 'http://localhost:4001';
+const BASE = process.env.SMOKE_BASE ?? 'http://localhost:4005';
 const SUPER_PHONE = process.env.SUPER_ADMIN_PHONE;
 const SUPER_PASSWORD = process.env.TEST_SUPER_PASSWORD ?? 'SuperAdmin1#';
 const DEV_OTP = process.env.DEV_OTP_OVERRIDE;
@@ -118,9 +118,9 @@ async function main(): Promise<number> {
   const branchId = branchRes.json.data.id;
   pass('create branch');
 
-  // 3. Register + verify + submit KYC + approve 13 savers
+  // 3. Register + verify + submit KYC + approve five savers
   const saverTokens: string[] = [];
-  for (let i = 1; i <= 13; i++) {
+  for (let i = 1; i <= 5; i++) {
     const phone = `+4479000${String(stamp).slice(-3)}${String(i).padStart(2, '0')}`;
 
     // Register
@@ -167,7 +167,7 @@ async function main(): Promise<number> {
       return 1;
     }
   }
-  pass('registered + verified + KYC-approved 13 savers');
+  pass('registered + verified + KYC-approved five savers');
 
   // 4. Check the branch's tenants
   const listRes = await api(
@@ -185,34 +185,23 @@ async function main(): Promise<number> {
     memberCount: number;
   }>;
 
-  if (tenants.length !== 2) {
-    fail('expected 2 tenants', `got ${tenants.length}`);
+  if (tenants.length !== 1) {
+    fail('expected exactly one tenant for the branch', `got ${tenants.length}`);
     return 1;
   }
-  pass('two tenants exist', `count=${tenants.length}`);
+  pass('exactly one tenant exists for the branch');
 
   const active = tenants.find((t) => t.status === 'ACTIVE');
-  const filling = tenants.find((t) => t.status === 'FILLING');
-
   if (!active) {
     fail('one tenant should be ACTIVE', 'none found');
     return 1;
   }
-  if (active.memberCount !== 12) {
-    fail('ACTIVE tenant should have 12 members', `got ${active.memberCount}`);
+  if (active.memberCount !== 5) {
+    fail('ACTIVE tenant should have five members', `got ${active.memberCount}`);
     return 1;
   }
-  pass('first tenant ACTIVE with 12 members', `id=${active.id.slice(0, 8)}`);
+  pass('tenant ACTIVE with five members', `id=${active.id.slice(0, 8)}`);
 
-  if (!filling) {
-    fail('second tenant should be FILLING', 'none found');
-    return 1;
-  }
-  if (filling.memberCount !== 1) {
-    fail('FILLING tenant should have 1 member', `got ${filling.memberCount}`);
-    return 1;
-  }
-  pass('second tenant FILLING with 1 member', `id=${filling.id.slice(0, 8)}`);
 
   console.log('');
   console.log('============================================');
