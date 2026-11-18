@@ -103,18 +103,13 @@ export class ProvisioningService {
     let createdNewTenant = false;
 
     if (!tenant) {
-      const existingTenantRes = await pool.query<{ count: string }>(
-        `SELECT COUNT(*)::text AS count FROM tenants WHERE branch_id = $1`,
-        [branchId]
-      );
-      if (Number(existingTenantRes.rows[0]?.count ?? '0') > 0) {
-        throw new Error('Sandbox trial allows only one savings circle per branch');
-      }
-      // Count existing tenants to generate a sequential name (e.g., Tenant 01)
       const countRes = await pool.query<{ count: string }>(
         `SELECT COUNT(*)::text AS count FROM tenants WHERE branch_id = $1`,
         [branchId]
       );
+      if (Number(countRes.rows[0]?.count ?? '0') > 0) {
+        throw new Error('Sandbox trial allows only one savings circle per branch');
+      }
       const tenantCount = Number(countRes.rows[0]?.count ?? '0');
       
       // Pad with zero: Tenant 01, Tenant 02
