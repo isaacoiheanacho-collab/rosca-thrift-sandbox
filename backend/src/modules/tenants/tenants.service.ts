@@ -7,6 +7,7 @@
  */
 
 import { logger } from '../../logger';
+import { env } from '../../config/env';
 import { AppError, ConflictError, NotFoundError } from '../../errors';
 import { record } from '../audit/audit.service';
 import { usersRepository } from '../users/users.repository';
@@ -252,10 +253,17 @@ export class TenantsService {
     }
 
     const used = await tenantsRepository.usedSlots(tenantId);
+    if (!Number.isInteger(slotNumber) || slotNumber < 1 || slotNumber > env.CIRCLE_SIZE) {
+      throw new AppError({
+        code: 'TENANT_INVALID_SLOT',
+        httpStatus: 400,
+        message: `Slot must be between 1 and ${env.CIRCLE_SIZE}`,
+      });
+    }
     if (used.includes(slotNumber)) {
       throw new ConflictError(`Slot ${slotNumber} is taken`, 'TENANT_SLOT_TAKEN');
     }
-    if (used.length >= 12) {
+    if (used.length >= env.CIRCLE_SIZE) {
       throw new ConflictError('Tenant is full', 'TENANT_FULL');
     }
 
@@ -284,7 +292,7 @@ export class TenantsService {
         message: 'Tenant is full',
       });
     }
-    const free = Array.from({ length: 12 }, (_, i) => i + 1).filter((n) => !used.includes(n));
+    const free = Array.from({ length: env.CIRCLE_SIZE }, (_, i) => i + 1).filter((n) => !used.includes(n));
     return free[Math.floor(Math.random() * free.length)]!;
   }
 }
