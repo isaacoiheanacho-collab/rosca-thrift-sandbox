@@ -209,10 +209,7 @@ export class TenantsService {
       );
     }
 
-    const updated = await tenantsRepository.updateStatus(tenantId, status, {
-      activate: status === 'ACTIVE',
-      complete: status === 'COMPLETED',
-    });
+    const updated = await tenantsRepository.updateStatus(tenantId, status);
 
     await record({
       actorId,
