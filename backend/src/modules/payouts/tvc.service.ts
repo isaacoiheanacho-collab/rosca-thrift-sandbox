@@ -5,10 +5,10 @@
  * adjustment to later positions. The circle midpoint has zero adjustment.
  *
  * Formula:
- *   cycle_rate = annual_rate_bps / 10000 / 52 (weekly cycle)
- *   adjustment   = gross_pot * weekly_rate * (circle_midpoint - position)
+ *   weekly adjustment = gross_pot * annual_rate * (2 * position - (circle_size + 1)) / (10000 * 104)
  *
- * Where position is the slot number and collection cycle; each cycle is one week.
+ * The annual rate is derived at tenure activation so the first/last slot
+ * adjustment equals -/+ 50% of one member's contribution.
  */
 
 import { env } from '../../config/env';
@@ -18,6 +18,42 @@ export interface TvcCalculation {
   adjustment: bigint;  // signed, pence
   potAfterTvc: bigint; // gross + adjustment
   rateBps: number;
+}
+
+/**
+ * Derive the annual TVC rate (basis points) required to make the first and
+ * final collection positions equal to -/+ 50% of one member's contribution.
+ *
+ * For a weekly circle:
+ *   endpoint adjustment = gross * annualRate * (circleSize - 1) / 104
+ *   target adjustment   = contribution / 2
+ *
+ * The result is rounded to the nearest basis point. With equal contributions,
+ * contribution size cancels algebraically, but it is deliberately included in
+ * the derivation so the rate is tied to the actual contribution and circle.
+ */
+export function deriveTvcAnnualBps(
+  contributionPence: bigint,
+  circleSize: number,
+): number {
+  if (contributionPence <= 0n) {
+    throw new Error('Contribution must be greater than zero.');
+  }
+  if (!Number.isInteger(circleSize) || circleSize < 2) {
+    throw new Error('Circle size must be an integer of at least 2.');
+  }
+
+  const grossPotPence = contributionPence * BigInt(circleSize);
+  const numerator = contributionPence * 10000n * 104n;
+  const denominator = 2n * grossPotPence * BigInt(circleSize - 1);
+  const rounded = (numerator + denominator / 2n) / denominator;
+  const rateBps = Number(rounded);
+
+  if (!Number.isSafeInteger(rateBps) || rateBps <= 0) {
+    throw new Error('Derived TVC rate is outside the supported range.');
+  }
+
+  return rateBps;
 }
 
 /**
@@ -39,8 +75,9 @@ export function calculateTvc(
   // Each collection cycle is one week, so convert the annual rate to a weekly rate.
   // Double the centred slot offset to preserve integer arithmetic:
   //   adjustmentPence = grossPotPence * tvcAnnualBps * (2*position - (CIRCLE_SIZE + 1)) / (10000 * 104)
+  // Early positions are negative; later positions are positive.
 
-  const doubleOffset = (env.CIRCLE_SIZE + 1) - 2 * position; // positive before midpoint, negative after
+  const doubleOffset = 2 * position - (env.CIRCLE_SIZE + 1);
   const numerator = grossPotPence * BigInt(tvcAnnualBps) * BigInt(doubleOffset);
   const denominator = BigInt(10000 * 104); // annual rate converted to a weekly rate
 
