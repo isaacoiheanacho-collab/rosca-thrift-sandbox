@@ -135,7 +135,7 @@ async function main(): Promise<void> {
       savers.push({ phone, number: saverNumber });
     }
 
-    const verifications = await Promise.all(
+    await Promise.all(
       savers.map(async (saver) => {
         const verify = await api('POST', '/api/auth/verify-phone', {
           body: { phone: saver.phone, code: DEV_OTP },
@@ -144,7 +144,6 @@ async function main(): Promise<void> {
         assert(verify.json.data.user.role === 'SAVER', 'Saver registration returned the wrong role');
       }),
     );
-    void verifications;
 
     const tenants = await api('GET', `/api/super-admin/tenants/by-branch/${branch.id}`, {
       token: superToken,
