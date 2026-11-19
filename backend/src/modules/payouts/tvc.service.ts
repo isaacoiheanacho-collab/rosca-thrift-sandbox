@@ -1,7 +1,7 @@
 /**
  * TVC (Time-Value Contribution) service.
  *
- * Rewards earlier collection positions and applies the corresponding negative
+ * Applies a negative adjustment to early collection positions and a positive
  * adjustment to later positions. The circle midpoint has zero adjustment.
  *
  * Formula:
@@ -61,7 +61,7 @@ export function deriveTvcAnnualBps(
  *
  * @param grossPotPence    The gross pool (e.g. £12,000 = 1_200_000n pence)
  * @param position         The slot number (1-CIRCLE_SIZE) — also the weekly cycle number
- * @param tvcAnnualBps     The annual TVC rate in basis points (e.g. 909 = 9.09% p.a.)
+ * @param tvcAnnualBps     The derived annual TVC rate in basis points.
  */
 export function calculateTvc(
   grossPotPence: bigint,
