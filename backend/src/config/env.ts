@@ -53,8 +53,8 @@ const EnvSchema = z.object({
 
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
 
-  // Tenant and branch configuration
-  MAX_TENANTS: z.coerce.number().int().refine((value) => value === 1, 'must be 1 for the single-tenant sandbox trial').default(1),
+  // Sandbox capacity: each independent branch may contain one tenant.
+  MAX_TENANTS_PER_BRANCH: z.coerce.number().int().positive().default(1),
   CONTRIBUTION_PENCE: z.coerce.number().int().refine((value) => value === 20000, 'must be 20000 (£200) for the sandbox trial').default(20000),
   CIRCLE_SIZE: z.coerce.number().int().refine((value) => value === 5, 'must be 5 for the five-member sandbox trial').default(5),
   PLATFORM_FEE_BPS: z.coerce.number().int().nonnegative().default(0),
