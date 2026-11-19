@@ -107,7 +107,6 @@ async function main(): Promise<void> {
   }
 
   // Fill each branch independently with five phone-verified savers.
-  let sixthSaver: { userId: string; branchId: string } | null = null;
   let saverNumber = 0;
 
   for (const branch of branches) {
@@ -135,9 +134,6 @@ async function main(): Promise<void> {
       assert(verify.status === 200 && verify.json.ok, `Saver ${saverNumber} phone verification failed`);
       assert(verify.json.data.user.role === 'SAVER', 'Saver registration returned the wrong role');
 
-      if (branch === branches[0] && slot === 5) {
-        // Sixth saver is registered below, after the first branch is full.
-      }
     }
 
     const tenants = await api('GET', `/api/super-admin/tenants/by-branch/${branch.id}`, {
