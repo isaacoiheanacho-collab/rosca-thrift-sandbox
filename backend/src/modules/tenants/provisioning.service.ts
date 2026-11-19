@@ -108,8 +108,10 @@ export class ProvisioningService {
         `SELECT COUNT(*)::text AS count FROM tenants WHERE branch_id = $1`,
         [branchId]
       );
-      if (Number(countRes.rows[0]?.count ?? '0') > 0) {
-        throw new Error('Sandbox trial allows only one savings circle per branch');
+      if (Number(countRes.rows[0]?.count ?? '0') >= env.MAX_TENANTS_PER_BRANCH) {
+        throw new Error(
+          `Sandbox trial allows a maximum of ${env.MAX_TENANTS_PER_BRANCH} savings circle per branch`,
+        );
       }
       const tenantCount = Number(countRes.rows[0]?.count ?? '0');
       
