@@ -1,3 +1,5 @@
+import 'dotenv/config';
+
 /**
  * Sandbox branch isolation integration test.
  *
