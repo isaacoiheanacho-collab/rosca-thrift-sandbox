@@ -35,6 +35,7 @@ import {
 import { tenureRenewalRepository } from './tenure-renewal.repository';
 import { usersRepository } from '../users/users.repository';
 import { notificationsService } from '../notifications/notifications.service';
+import { deriveTvcAnnualBps } from '../payouts/tvc.service';
 
 export interface RequestMeta {
   ipAddress?: string;
@@ -436,6 +437,10 @@ export class TenureRenewalService {
 
       const nextTenure = tenant.current_tenure + 1;
       nextTenureFinal = nextTenure;
+      const tvcAnnualBps = deriveTvcAnnualBps(
+        BigInt(env.CONTRIBUTION_PENCE),
+        env.CIRCLE_SIZE,
+      );
 
       await tx.query(
         `UPDATE tenants
@@ -455,7 +460,7 @@ export class TenureRenewalService {
              renewal_fill_ends_at = NULL,
              completed_at = NULL
          WHERE id = $1`,
-        [tenantId, nextTenure, env.TVC_ANNUAL_BPS],
+        [tenantId, nextTenure, tvcAnnualBps],
       );
 
       await record(
