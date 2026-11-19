@@ -58,11 +58,18 @@ export class ProvisioningService {
     const result = await withTransaction(async (tx) => {
       // This row lock serializes every provisioning attempt within this branch,
       // while leaving other partners' branches independent.
-      const branchRes = await tx.query<{ id: string }>(
-        'SELECT id FROM branches WHERE id = $1 FOR UPDATE',
+      const branchRes = await tx.query<{ id: string; status: string }>(
+        'SELECT id, status FROM branches WHERE id = $1 FOR UPDATE',
         [branchId],
       );
-      if (!branchRes.rows[0]) throw new NotFoundError('Branch');
+      const branch = branchRes.rows[0];
+      if (!branch) throw new NotFoundError('Branch');
+      if (branch.status !== 'ACTIVE') {
+        throw new ConflictError(
+          'This branch is not accepting saver enrolments',
+          'AUTH_BRANCH_NOT_ACTIVE',
+        );
+      }
 
       // Re-check idempotency after acquiring the branch lock. A parallel request
       // for this same saver may have completed while this request was waiting.
