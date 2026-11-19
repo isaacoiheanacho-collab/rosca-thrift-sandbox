@@ -3,7 +3,6 @@
  */
 
 import { logger } from '../../logger';
-import { env } from '../../config/env';
 import { withTransaction } from '../../db';
 import { pool } from '../../db';
 import { AppError, ConflictError, NotFoundError } from '../../errors';
@@ -164,15 +163,6 @@ export class BranchesService {
     createdBy: string,
     meta: RequestMeta,
   ): Promise<BranchDto> {
-    const total = await branchesRepository.count();
-    if (total >= env.MAX_TENANTS) {
-      throw new AppError({
-        code: 'BRANCH_LIMIT_REACHED',
-        httpStatus: 409,
-        message: `Platform has reached the maximum of ${env.MAX_TENANTS} branches`,
-      });
-    }
-
     const existing = await branchesRepository.findBySlug(input.slug);
     if (existing) {
       throw new ConflictError('Branch slug is already taken', 'BRANCH_SLUG_TAKEN');
