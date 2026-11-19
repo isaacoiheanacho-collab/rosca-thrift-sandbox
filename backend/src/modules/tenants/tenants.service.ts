@@ -231,9 +231,9 @@ export class TenantsService {
     meta: RequestMeta,
   ): Promise<TenantDto> {
     const existing = await tenantsRepository.findByBranch(branchId, { limit: 1, offset: 0 });
-    if (existing.total > 0) {
+    if (existing.total >= env.MAX_TENANTS_PER_BRANCH) {
       throw new ConflictError(
-        'The sandbox trial allows only one savings circle per branch',
+        `The sandbox trial allows a maximum of ${env.MAX_TENANTS_PER_BRANCH} savings circle per branch`,
         'SANDBOX_ONE_CIRCLE_PER_BRANCH',
       );
     }
