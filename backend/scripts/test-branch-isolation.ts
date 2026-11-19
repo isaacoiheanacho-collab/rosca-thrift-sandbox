@@ -108,10 +108,13 @@ async function main(): Promise<void> {
     branches.push({ id: branchId, slug });
   }
 
-  // Fill each branch independently with five phone-verified savers.
+  // Fill each branch independently. Verify the five savers concurrently
+  // within each branch to exercise branch-row serialization under contention.
   let saverNumber = 0;
 
   for (const branch of branches) {
+    const savers: Array<{ phone: string; number: number }> = [];
+
     for (let slot = 1; slot <= 5; slot++) {
       saverNumber += 1;
       const phone = `+447701${String(stamp).slice(-6)}${String(saverNumber).padStart(2, '0')}`;
@@ -129,14 +132,19 @@ async function main(): Promise<void> {
         },
       });
       assert(register.status === 201 && register.json.ok, `Saver ${saverNumber} registration failed: ${JSON.stringify(register.json)}`);
-
-      const verify = await api('POST', '/api/auth/verify-phone', {
-        body: { phone, code: DEV_OTP },
-      });
-      assert(verify.status === 200 && verify.json.ok, `Saver ${saverNumber} phone verification failed`);
-      assert(verify.json.data.user.role === 'SAVER', 'Saver registration returned the wrong role');
-
+      savers.push({ phone, number: saverNumber });
     }
+
+    const verifications = await Promise.all(
+      savers.map(async (saver) => {
+        const verify = await api('POST', '/api/auth/verify-phone', {
+          body: { phone: saver.phone, code: DEV_OTP },
+        });
+        assert(verify.status === 200 && verify.json.ok, `Saver ${saver.number} phone verification failed`);
+        assert(verify.json.data.user.role === 'SAVER', 'Saver registration returned the wrong role');
+      }),
+    );
+    void verifications;
 
     const tenants = await api('GET', `/api/super-admin/tenants/by-branch/${branch.id}`, {
       token: superToken,
