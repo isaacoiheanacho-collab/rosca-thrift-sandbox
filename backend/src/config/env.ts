@@ -58,7 +58,7 @@ const EnvSchema = z.object({
   CONTRIBUTION_PENCE: z.coerce.number().int().refine((value) => value === 20000, 'must be 20000 (£200) for the sandbox trial').default(20000),
   CIRCLE_SIZE: z.coerce.number().int().refine((value) => value === 5, 'must be 5 for the five-member sandbox trial').default(5),
   PLATFORM_FEE_BPS: z.coerce.number().int().nonnegative().default(0),
-  TVC_ANNUAL_BPS: z.coerce.number().int().nonnegative().default(909),
+  // TVC annual rate is derived from contribution and circle size at tenure activation.
   BRANCH_JOIN_BASE_URL: z.string().url().default('http://localhost:3000/join'),
 
   // TextBee SMS
