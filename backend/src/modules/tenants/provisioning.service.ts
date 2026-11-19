@@ -160,10 +160,11 @@ export class ProvisioningService {
       const memberCount = Number(countRes.rows[0]?.count ?? '0');
 
       let activated = false;
+      let tvcAnnualBps: number | null = null;
 
       if (memberCount >= env.CIRCLE_SIZE && tenant!.status === 'FILLING') {
         // Derive and snapshot the rate that makes the endpoint TVC +/- 50% of one contribution.
-        const tvcAnnualBps = deriveTvcAnnualBps(
+        tvcAnnualBps = deriveTvcAnnualBps(
           BigInt(env.CONTRIBUTION_PENCE),
           env.CIRCLE_SIZE,
         );
