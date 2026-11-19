@@ -5,7 +5,7 @@ import 'dotenv/config';
  *
  * Exercises the real partner self-registration path (not Super Admin's
  * platform-only manual branch creation route), then provisions two separate
- * five-saver trial branches. It also verifies that a completed trial branch
+ * five-saver trial branches. It also verifies that a full trial branch
  * rejects a sixth saver without blocking the other branch.
  *
  * Run against a disposable sandbox DB:
@@ -147,7 +147,7 @@ async function main(): Promise<void> {
     assert(tenants.json.data.tenants[0].memberCount === 5, `${branch.slug} tenant should contain exactly five savers`);
   }
 
-  // Register an additional saver against the first, already-completed trial branch.
+  // Register an additional saver against the first, already-full trial branch.
   const completedBranch = branches[0]!;
   const sixthPhone = `+447702${String(stamp).slice(-6)}99`;
   const sixthRegister = await api('POST', '/api/auth/register', {
@@ -175,7 +175,7 @@ async function main(): Promise<void> {
     { token: superToken },
   );
   assert(
-    sixthProvision.status === 409 && sixthProvision.json.error?.code === 'SANDBOX_BRANCH_TRIAL_COMPLETED',
+    sixthProvision.status === 409 && sixthProvision.json.error?.code === 'SANDBOX_BRANCH_CAPACITY_REACHED',
     `Sixth saver should be rejected with SANDBOX_BRANCH_TRIAL_COMPLETED, got ${JSON.stringify(sixthProvision.json)}`,
   );
 
@@ -187,7 +187,7 @@ async function main(): Promise<void> {
 
   console.log('PASS: two community partners onboard independently');
   console.log('PASS: each branch has exactly one active five-saver tenant');
-  console.log('PASS: sixth saver cannot enter a completed trial branch');
+  console.log('PASS: sixth saver cannot enter a full trial branch');
   console.log('PASS: completing one branch does not restrict another branch');
 }
 
