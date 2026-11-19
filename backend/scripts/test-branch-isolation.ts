@@ -148,14 +148,14 @@ async function main(): Promise<void> {
   }
 
   // Register an additional saver against the first, already-full trial branch.
-  const completedBranch = branches[0]!;
+  const fullBranch = branches[0]!;
   const sixthPhone = `+447702${String(stamp).slice(-6)}99`;
   const sixthRegister = await api('POST', '/api/auth/register', {
     body: {
       phone: sixthPhone,
       password: 'SaverPass1#',
       fullName: 'Sixth Trial Saver',
-      branchSlug: completedBranch.slug,
+      branchSlug: fullBranch.slug,
       consents: {
         terms: { accepted: true, version: '1.0.0' },
         privacy: { accepted: true, version: '1.0.0' },
@@ -179,7 +179,7 @@ async function main(): Promise<void> {
     `Sixth saver should be rejected with SANDBOX_BRANCH_TRIAL_COMPLETED, got ${JSON.stringify(sixthProvision.json)}`,
   );
 
-  // Confirm the second partner's completed tenant remains independent and intact.
+  // Confirm the second partner's full tenant remains independent and intact.
   const secondBranchCheck = await api('GET', `/api/super-admin/tenants/by-branch/${branches[1]!.id}`, {
     token: superToken,
   });
