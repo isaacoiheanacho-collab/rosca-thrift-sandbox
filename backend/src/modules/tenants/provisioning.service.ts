@@ -112,8 +112,8 @@ export class ProvisioningService {
 
         if (tenantCount >= 1) {
           throw new ConflictError(
-            'This sandbox branch has completed or used its one trial tenant. No further saver enrolment is available.',
-            'SANDBOX_BRANCH_TRIAL_COMPLETED',
+            'This sandbox branch has filled or used its one five-member trial tenant. No further saver enrolment is available.',
+            'SANDBOX_BRANCH_CAPACITY_REACHED',
           );
         }
 
