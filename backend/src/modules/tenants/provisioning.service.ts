@@ -28,6 +28,7 @@ import { record } from '../audit/audit.service';
 import { usersRepository } from '../users/users.repository';
 import { tenantsRepository, type TenantRow } from './tenants.repository';
 import { tenureRenewalService } from './tenure-renewal.service';
+import { deriveTvcAnnualBps } from '../payouts/tvc.service';
 
 export interface ProvisionResult {
   tenantId: string;
@@ -161,6 +162,12 @@ export class ProvisioningService {
       let activated = false;
 
       if (memberCount >= env.CIRCLE_SIZE && tenant!.status === 'FILLING') {
+        // Derive and snapshot the rate that makes the endpoint TVC +/- 50% of one contribution.
+        const tvcAnnualBps = deriveTvcAnnualBps(
+          BigInt(env.CONTRIBUTION_PENCE),
+          env.CIRCLE_SIZE,
+        );
+
         // Set activation + cycle + snapshot tenure rates
         await tx.query(
           `UPDATE tenants
@@ -176,7 +183,7 @@ export class ProvisioningService {
                current_tenure_tvc_bps = $3,
                tenure_started_at = NOW()
            WHERE id = $1 AND status = 'FILLING'`,
-          [tenant!.id, env.PLATFORM_FEE_BPS, env.TVC_ANNUAL_BPS]
+          [tenant!.id, env.PLATFORM_FEE_BPS, tvcAnnualBps]
         );
         activated = true;
       }
@@ -202,7 +209,7 @@ export class ProvisioningService {
             metadata: {
               memberCount,
               feeBps: env.PLATFORM_FEE_BPS,
-              tvcBps: env.TVC_ANNUAL_BPS,
+              tvcBps: tvcAnnualBps,
             },
           },
           tx
