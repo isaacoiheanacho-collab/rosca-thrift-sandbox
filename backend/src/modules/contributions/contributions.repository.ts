@@ -58,6 +58,8 @@ export interface ReceiptRow {
   claimed_reference: string | null;
   claimed_sender_name: string | null;
   claimed_note: string | null;
+  review_status: 'PENDING' | 'REJECTED' | 'APPROVED';
+  review_note: string | null;
   created_at: Date;
 }
 
@@ -263,7 +265,7 @@ export class ContributionsRepository {
   ): Promise<{ intents: ContributionIntentRow[]; total: number }> {
     const conditions: string[] = [
       `i.state IN ('PENDING', 'LATE')`,
-      `EXISTS (SELECT 1 FROM receipts r WHERE r.intent_id = i.id)`,
+      `EXISTS (SELECT 1 FROM receipts r WHERE r.intent_id = i.id AND r.review_status = 'PENDING' AND r.purpose = 'CONTRIBUTION')`,
       `NOT EXISTS (SELECT 1 FROM contributions c WHERE c.intent_id = i.id)`,
     ];
     const params: unknown[] = [];
@@ -482,21 +484,34 @@ export class ContributionsRepository {
 
   async findReceiptByIntentId(intentId: string): Promise<ReceiptRow | null> {
     const result = await pool.query<ReceiptRow>(
-      `SELECT * FROM receipts WHERE intent_id = $1 ORDER BY created_at DESC LIMIT 1`,
+      `SELECT * FROM receipts WHERE intent_id = $1 AND purpose = 'CONTRIBUTION' ORDER BY created_at DESC LIMIT 1`,
       [intentId],
     );
     return result.rows[0] ?? null;
   }
 
-  /**
-   * Batch lookup: given a list of intent IDs, return a Set of the ones
-   * that already have a receipt. Used to avoid N+1 queries when building
-   * DTOs for lists (tenant cycle status, admin pending queue).
-   */
+  async findPendingReceiptByIntentId(intentId: string): Promise<ReceiptRow | null> {
+    const result = await pool.query<ReceiptRow>(
+      `SELECT * FROM receipts WHERE intent_id = $1 AND purpose = 'CONTRIBUTION' AND review_status = 'PENDING' ORDER BY created_at DESC LIMIT 1`,
+      [intentId],
+    );
+    return result.rows[0] ?? null;
+  }
+
+  async updateLatestReceiptReview(intentId: string, status: 'REJECTED' | 'APPROVED', note: string | null, tx?: PoolClient): Promise<void> {
+    const runner = tx ?? pool;
+    await runner.query(
+      `UPDATE receipts SET review_status = $1, review_note = $2
+       WHERE id = (SELECT id FROM receipts WHERE intent_id = $3 AND purpose = 'CONTRIBUTION' AND review_status = 'PENDING' ORDER BY created_at DESC LIMIT 1)`,
+      [status, note, intentId],
+    );
+  }
+
+  /** Batch lookup of intents with a pending contribution receipt. */
   async findReceiptIntentIds(intentIds: string[]): Promise<Set<string>> {
     if (intentIds.length === 0) return new Set();
     const result = await pool.query<{ intent_id: string }>(
-      `SELECT DISTINCT intent_id FROM receipts WHERE intent_id = ANY($1::uuid[])`,
+      `SELECT DISTINCT intent_id FROM receipts WHERE intent_id = ANY($1::uuid[]) AND purpose = 'CONTRIBUTION' AND review_status = 'PENDING'`,
       [intentIds],
     );
     return new Set(result.rows.map((r) => r.intent_id));
