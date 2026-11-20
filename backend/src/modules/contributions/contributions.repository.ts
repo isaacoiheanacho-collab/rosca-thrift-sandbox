@@ -371,12 +371,12 @@ export class ContributionsRepository {
 
     if (branchId) {
       params.push(branchId);
-      conditions.push(`i.branch_id = ${params.length}`);
+      conditions.push(`i.branch_id = $${params.length}`);
     }
 
     if (options.tenantId) {
       params.push(options.tenantId);
-      conditions.push(`i.tenant_id = ${params.length}`);
+      conditions.push(`i.tenant_id = $${params.length}`);
     }
 
     const where = `WHERE ${conditions.join(' AND ')}`;
@@ -418,7 +418,7 @@ export class ContributionsRepository {
        JOIN tenants t ON t.id = i.tenant_id
        ${where}
        ORDER BY r.created_at DESC
-       LIMIT ${limitIdx} OFFSET ${offsetIdx}`,
+       LIMIT $${limitIdx} OFFSET $${offsetIdx}`,
       params,
     );
 
