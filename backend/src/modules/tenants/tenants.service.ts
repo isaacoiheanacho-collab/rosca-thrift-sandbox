@@ -33,6 +33,7 @@ export interface TenantDto {
   currentCycle: number;
   currentTenure: number;
   memberCount: number;
+  tvcAnnualRateBps: number;
   activatedAt: string | null;
   completedAt: string | null;
   createdAt: string;
@@ -77,6 +78,7 @@ async function toTenantDto(row: TenantRow): Promise<TenantDto> {
     currentCycle: row.current_cycle,
     currentTenure: row.current_tenure,
     memberCount,
+    tvcAnnualRateBps: row.current_tenure_tvc_bps,
     activatedAt: row.activated_at?.toISOString() ?? null,
     completedAt: row.completed_at?.toISOString() ?? null,
     createdAt: row.created_at.toISOString(),
