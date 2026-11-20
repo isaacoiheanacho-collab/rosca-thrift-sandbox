@@ -242,6 +242,17 @@ export class PayoutsRepository {
     return { intents: listResult.rows, total };
   }
 
+function toPayoutIntentRow(row: PayoutIntentRow): PayoutIntentRow {
+  return {
+    ...row,
+    gross_amount: BigInt(row.gross_amount),
+    tvc_adjustment: BigInt(row.tvc_adjustment),
+    pot_after_tvc: BigInt(row.pot_after_tvc),
+    platform_fee: BigInt(row.platform_fee),
+    net_amount: BigInt(row.net_amount),
+  };
+}
+
   // ---- Payout intents ----
 
   async findPayoutIntent(
@@ -254,7 +265,7 @@ export class PayoutsRepository {
        WHERE tenant_id = $1 AND tenure = $2 AND cycle = $3`,
       [tenantId, tenure, cycle],
     );
-    return result.rows[0] ?? null;
+    return result.rows[0] ? toPayoutIntentRow(result.rows[0]) : null;
   }
 
   async findPayoutIntentById(id: string): Promise<PayoutIntentRow | null> {
@@ -262,7 +273,7 @@ export class PayoutsRepository {
       'SELECT * FROM payout_intents WHERE id = $1',
       [id],
     );
-    return result.rows[0] ?? null;
+    return result.rows[0] ? toPayoutIntentRow(result.rows[0]) : null;
   }
 
   async insertPayoutIntent(
@@ -321,7 +332,7 @@ export class PayoutsRepository {
         data.initialState ?? 'PENDING',
       ],
     );
-    return result.rows[0]!;
+    return toPayoutIntentRow(result.rows[0]!);
   }
 
   async updatePayoutState(
@@ -357,7 +368,7 @@ export class PayoutsRepository {
         opts.failureReason ?? null,
       ],
     );
-    return result.rows[0]!;
+    return toPayoutIntentRow(result.rows[0]!);
   }
 
   /**
@@ -379,7 +390,7 @@ export class PayoutsRepository {
        LIMIT $2`,
       [tenantId, limit],
     );
-    return result.rows;
+    return result.rows.map(toPayoutIntentRow);
   }
 
   async listPayoutsByRecipient(userId: string): Promise<PayoutIntentRow[]> {
@@ -389,7 +400,7 @@ export class PayoutsRepository {
        ORDER BY tenure DESC, cycle DESC`,
       [userId],
     );
-    return result.rows;
+    return result.rows.map(toPayoutIntentRow);
   }
 
   /**
@@ -437,7 +448,7 @@ export class PayoutsRepository {
       params,
     );
 
-    return { intents: listResult.rows, total };
+    return { intents: listResult.rows.map(toPayoutIntentRow), total };
   }
 
   /**
@@ -474,7 +485,7 @@ export class PayoutsRepository {
       [options.limit, options.offset],
     );
 
-    return { intents: listResult.rows, total };
+    return { intents: listResult.rows.map(toPayoutIntentRow), total };
   }
 }
 
