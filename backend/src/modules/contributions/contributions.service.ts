@@ -436,6 +436,31 @@ export class ContributionsService {
     return { intents: dtos, total };
   }
 
+  async listRejectedForAdmin(
+    branchId: string | null,
+    options: { limit: number; offset: number; tenantId?: string },
+  ): Promise<{ receipts: any[]; total: number }> {
+    const { receipts, total } = await contributionsRepository.listRejectedReceiptsForBranch(branchId, options);
+    const dtos = await Promise.all(receipts.map(async (r: any) => ({
+      receiptId: r.receipt_id,
+      intentId: r.intent_id,
+      tenantName: r.tenant_name,
+      userName: r.user_name,
+      reference: r.reference,
+      cycle: r.cycle,
+      amountPence: r.claimed_amount?.toString() ?? r.expected_amount?.toString() ?? null,
+      claimedReference: r.claimed_reference,
+      claimedSenderName: r.claimed_sender_name,
+      claimedNote: r.claimed_note,
+      rejectionReason: r.review_note,
+      uploadedAt: r.uploaded_at.toISOString(),
+      objectUrl: await getPresignedDownloadUrl(r.object_key, 300),
+      fileName: r.file_name,
+      mimeType: r.mime_type,
+    })));
+    return { receipts: dtos, total };
+  }
+
   async listConfirmedForAdmin(
     branchId: string | null,
     options: { limit: number; offset: number; tenantId?: string }, // <-- add tenantId
