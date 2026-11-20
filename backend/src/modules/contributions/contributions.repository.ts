@@ -358,6 +358,73 @@ export class ContributionsRepository {
     return { contributions: listResult.rows, total };
   }
 
+  /** List rejected contribution receipts for branch-admin review history. */
+  async listRejectedReceiptsForBranch(
+    branchId: string | null,
+    options: { limit: number; offset: number; tenantId?: string },
+  ): Promise<{ receipts: any[]; total: number }> {
+    const conditions: string[] = [
+      `r.purpose = 'CONTRIBUTION'`,
+      `r.review_status = 'REJECTED'`,
+    ];
+    const params: unknown[] = [];
+
+    if (branchId) {
+      params.push(branchId);
+      conditions.push(`i.branch_id = ${params.length}`);
+    }
+
+    if (options.tenantId) {
+      params.push(options.tenantId);
+      conditions.push(`i.tenant_id = ${params.length}`);
+    }
+
+    const where = `WHERE ${conditions.join(' AND ')}`;
+    const countResult = await pool.query<{ count: string }>(
+      `SELECT COUNT(*)::text AS count
+       FROM receipts r
+       JOIN contribution_intents i ON i.id = r.intent_id
+       ${where}`,
+      params,
+    );
+    const total = Number(countResult.rows[0]?.count ?? '0');
+
+    params.push(options.limit);
+    const limitIdx = params.length;
+    params.push(options.offset);
+    const offsetIdx = params.length;
+
+    const listResult = await pool.query(
+      `SELECT
+         r.id AS receipt_id,
+         r.object_key,
+         r.file_name,
+         r.mime_type,
+         r.claimed_amount,
+         r.claimed_reference,
+         r.claimed_sender_name,
+         r.claimed_note,
+         r.review_note,
+         r.created_at AS uploaded_at,
+         i.id AS intent_id,
+         i.reference,
+         i.cycle,
+         i.expected_amount,
+         u.full_name AS user_name,
+         t.name AS tenant_name
+       FROM receipts r
+       JOIN contribution_intents i ON i.id = r.intent_id
+       JOIN users u ON u.id = i.user_id
+       JOIN tenants t ON t.id = i.tenant_id
+       ${where}
+       ORDER BY r.created_at DESC
+       LIMIT ${limitIdx} OFFSET ${offsetIdx}`,
+      params,
+    );
+
+    return { receipts: listResult.rows, total };
+  }
+
   // ---- Contributions ----
 
   async insertContribution(
