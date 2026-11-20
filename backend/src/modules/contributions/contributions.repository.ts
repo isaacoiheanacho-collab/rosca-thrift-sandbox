@@ -149,6 +149,7 @@ export class ContributionsRepository {
            SELECT 1 FROM receipts r
            WHERE r.intent_id = i.id
              AND r.purpose = 'CONTRIBUTION'
+             AND r.review_status = 'PENDING'
          )
        ORDER BY tm.slot_number ASC`,
       [tenantId, tenure, cycle],
@@ -552,6 +553,7 @@ export class ContributionsRepository {
        cycle_receipts AS (
          SELECT DISTINCT intent_id FROM receipts
          WHERE intent_id IN (SELECT id FROM cycle_intents)
+           AND purpose = 'CONTRIBUTION' AND review_status = 'PENDING'
        )
        SELECT
          tm.id           AS membership_id,
