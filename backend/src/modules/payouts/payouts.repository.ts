@@ -64,6 +64,17 @@ export interface PayoutIntentRow {
   updated_at: Date;
 }
 
+function toPayoutIntentRow(row: PayoutIntentRow): PayoutIntentRow {
+  return {
+    ...row,
+    gross_amount: BigInt(row.gross_amount),
+    tvc_adjustment: BigInt(row.tvc_adjustment),
+    pot_after_tvc: BigInt(row.pot_after_tvc),
+    platform_fee: BigInt(row.platform_fee),
+    net_amount: BigInt(row.net_amount),
+  };
+}
+
 export class PayoutsRepository {
   // ---- Fee intents ----
 
@@ -241,17 +252,6 @@ export class PayoutsRepository {
 
     return { intents: listResult.rows, total };
   }
-
-function toPayoutIntentRow(row: PayoutIntentRow): PayoutIntentRow {
-  return {
-    ...row,
-    gross_amount: BigInt(row.gross_amount),
-    tvc_adjustment: BigInt(row.tvc_adjustment),
-    pot_after_tvc: BigInt(row.pot_after_tvc),
-    platform_fee: BigInt(row.platform_fee),
-    net_amount: BigInt(row.net_amount),
-  };
-}
 
   // ---- Payout intents ----
 
